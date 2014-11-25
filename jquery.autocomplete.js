@@ -22,7 +22,7 @@ $.fn.extend({
 			data: isUrl ? null : urlOrData,
 			delay: isUrl ? $.Autocompleter.defaults.delay : 10,
 			max: options && !options.scroll ? 10 : 150,
-			noRecord: "No Records."
+			noRecord: ""
 		}, options);
 
 		// if highlight is set to false, replace it with a do-nothing function
@@ -176,8 +176,16 @@ $.Autocompleter = function(input, options) {
 		// to be focused to begin with; just show select
 		if( options.clickFire ) {
 		  if ( !select.visible() ) {
-  			onChange(0, true);
-  		}
+			//console.log(select.isSelectedWithMouse());
+			if(select.isSelectedWithMouse()){
+				onChange(0, false);
+			}
+			else{
+				onChange(0, true);
+			}
+  		  }
+		  else{
+		  }
 		} else {
 		  if ( hasFocus++ > 1 && !select.visible() ) {
   			onChange(0, true);
@@ -254,8 +262,14 @@ $.Autocompleter = function(input, options) {
 
 	function onChange(crap, skipPrevCheck) {
 		if( lastKeyPressCode == KEY.DEL ) {
-			select.hide();
-			return;
+			//show suggestions anyway on click "delete"
+			//select.hide();
+			//return;
+		}
+		if( lastKeyPressCode == KEY.TAB ) {
+            select.hide();
+			//hide suggestions on "tab"
+            //return;
 		}
 
 		var currentValue = $input.val();
@@ -367,7 +381,7 @@ $.Autocompleter = function(input, options) {
 				success(term, data);
 			}
 			else{
-				var parsed = options.parse && options.parse(options.noRecord) || parse(options.noRecord);	
+				var parsed = options.parse && options.parse(options.noRecord) || parse(options.noRecord);
 				success(term,parsed);
 			}
 		// if an AJAX url has been supplied, try loading the data now
@@ -612,7 +626,8 @@ $.Autocompleter.Select = function (options, input, select, config) {
 		term = "",
 		needsInit = true,
 		element,
-		list;
+		list,
+		isSelectedWithMouse = false;
 
 	// Create results
 	function init() {
@@ -639,6 +654,7 @@ $.Autocompleter.Select = function (options, input, select, config) {
 		}).click(function(event) {
 			$(target(event)).addClass(CLASSES.ACTIVE);
 			select();
+			isSelectedWithMouse = true;
 			if( options.inputFocus )
 			  input.focus();
 			return false;
@@ -749,6 +765,7 @@ $.Autocompleter.Select = function (options, input, select, config) {
 			}
 		},
 		hide: function() {
+			isSelectedWithMouse = false;
 			element && element.hide();
 			listItems && listItems.removeClass(CLASSES.ACTIVE);
 			active = -1;
@@ -791,6 +808,9 @@ $.Autocompleter.Select = function (options, input, select, config) {
 		selected: function() {
 			var selected = listItems && listItems.filter("." + CLASSES.ACTIVE).removeClass(CLASSES.ACTIVE);
 			return selected && selected.length && $.data(selected[0], "ac_data");
+		},
+		isSelectedWithMouse: function(){
+			return isSelectedWithMouse;
 		},
 		emptyList: function (){
 			list && list.empty();
